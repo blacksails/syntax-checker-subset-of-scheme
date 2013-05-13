@@ -116,7 +116,17 @@
 ;;; predicate:
 (define is-cond?
   (lambda (v)
-    (= 'cond (car v))))
+    (equal? 'cond (car v))))
+
+;;; predicate:
+(define is-and?
+  (lambda (v)
+    (equal? 'and (car v))))
+
+;;; predicate:
+(define is-or?
+  (lambda (v)
+    (equal? 'or (car v))))
 
 ;;; predicate:
 (define is-quasiquote?
@@ -154,6 +164,8 @@
        (check-cond-expression v)]
       [(is-and? v)
        (check-and-expression v)]
+      [(is-or? v)
+       (check-or-expression v)]
       [(is-quasiquote? v)
        (check-quasiquote-expression v)]
       [else
@@ -199,7 +211,16 @@
                                (equal? (list-ref (car v) 0) 'else)
                                (check-expression (list-ref (car v) 1)))))])
       (visit (cdr v)))))
-                      
+
+(define check-and-expression
+  (lambda (v)
+    (letrec ([visit (lambda (v)
+                      (if (not (null? v))
+                          (if (check-expression (car v))
+                              (visit (cdr v))
+                              #f)
+                          #t))])
+      (visit (cdr v))))) 
 
 (define check-quasiquote-expression
   (lambda (v)
