@@ -222,6 +222,16 @@
                           #t))])
       (visit (cdr v))))) 
 
+(define check-or-expression
+  (lambda (v)
+    (letrec ([visit (lambda (v)
+                      (if (not (null? v))
+                          (if (check-expression (car v))
+                              (visit (cdr v))
+                              #f)
+                          #t))])
+      (visit (cdr v)))))
+
 (define check-quasiquote-expression
   (lambda (v)
     (letrec ([visit (lambda (v number-of-nestings)
