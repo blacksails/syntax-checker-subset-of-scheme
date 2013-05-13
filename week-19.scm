@@ -129,6 +129,16 @@
     (equal? 'or (car v))))
 
 ;;; predicate:
+(define is-begin?
+  (lambda (v)
+    (equal? 'begin (car v))))
+
+;;; predicate:
+(define is-quote?
+  (lambda (v)
+    (equal? 'quote (car v))))
+
+;;; predicate:
 (define is-quasiquote?
   (lambda (v)
     (and (proper-list-of-given-length? v 2)
@@ -166,6 +176,10 @@
        (check-and-expression v)]
       [(is-or? v)
        (check-or-expression v)]
+      [(is-begin? v)
+       (check-begin-expression v)]
+      [(is-quote? v)
+       (check-quote-expression v)]
       [(is-quasiquote? v)
        (check-quasiquote-expression v)]
       [else
@@ -231,6 +245,36 @@
                               #f)
                           #t))])
       (visit (cdr v)))))
+
+(define check-begin-expression
+  (lambda (v)
+    (letrec ([visit (lambda (v)
+                      (if (not (null? v))
+                          (if (check-expression (car v))
+                              (visit (cdr v))
+                              #f)
+                          #t))])
+      (visit (cdr v)))))
+
+(define check-quotation
+  (lambda (v)
+    (letrec ([visit (lambda (v)
+                      (cond 
+                        [(pair? v)
+                          ((visit (car v))
+                           (visit (cdr v)))]
+                        [(null? v)
+                         #t]
+                        [(or (number? v)
+                             (boolean? v)
+                             (char? v)
+                             (string? v)
+                             (symbol? v))
+                         #t]
+                        [else #f]))])
+      (visit v))))
+
+;(define check-quote
 
 (define check-quasiquote-expression
   (lambda (v)
