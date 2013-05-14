@@ -327,8 +327,8 @@
       (visit (list-ref v 1) '()))))
 
 (define check-letstar-expression
-  (trace-lambda outer (v)
-    (letrec ([visit (trace-lambda inner (l)
+  (lambda (v)
+    (letrec ([visit (lambda (l)
                       (if (not (null? l))                          
                           (if (and (proper-list-of-given-length? (car l) 2)
                                    (if (symbol? (list-ref (car l) 0))
