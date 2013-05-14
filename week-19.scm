@@ -125,6 +125,16 @@
     (and (list-strictly-longer-than? v 2)
          (equal? 'case (car v)))))
 
+;;; 1st accessor:
+(define case-1
+  (lambda (v)
+    (list-ref v 1)))
+
+;;; 2nd accessor:
+(define case-2
+  (lambda (v)
+    (cdr (cdr v))))
+
 ;;; predicate:
 (define is-and?
   (lambda (v)
@@ -189,6 +199,8 @@
        (check-if-expression v)]
       [(is-cond? v)
        (check-cond-expression v)]
+      [(is-case? v)
+       (check-case-expression v)]
       [(is-and? v)
        (check-and-expression v)]
       [(is-or? v)
@@ -242,6 +254,40 @@
                                (equal? (list-ref (car v) 0) 'else)
                                (check-expression (list-ref (car v) 1)))))])
       (visit (cdr v)))))
+
+(define check-case-expression
+  (lambda (v)
+    (and
+     (check-expression (case-1 v))
+     (letrec ([visit (lambda (v)
+                       (if (not (proper-list-given-length? v 1))
+                           (if (letrec ([visit (lambda (v)
+                                                 (if (not (null? v))
+                                                     (if (check-quotation (car v))
+                                                         (visit (cdr q))
+                                                         #f)))])
+                                 (visit (case-2
+                                                 
+
+(define check-case-expression-1
+  (trace-lambda l1 (v)
+    (and (check-expression (list-ref v 1))
+         (letrec ([visit (trace-lambda l2 (l)
+                           (if (and (not (proper-list-of-given-length? l 1))
+                                    (letrec ([visit (trace-lambda l3 (q)
+                                                      (if (not (null? q))
+                                                          (if (check-quotation (car v))
+                                                              (visit (cdr q))
+                                                              #f)
+                                                          (and 
+                                      (visit (list-ref (car l) 0))))
+                               (visit (cdr l))
+
+                               (check-expression (car l))))])
+
+           (visit (cdr (cdr v)))))))
+
+                              
 
 (define check-and-expression
   (lambda (v)
