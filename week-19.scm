@@ -116,27 +116,38 @@
 ;;; predicate:
 (define is-cond?
   (lambda (v)
-    (equal? 'cond (car v))))
+    (and (list-strictly-longer-than? v 1)
+         (equal? 'cond (car v)))))
 
 ;;; predicate:
 (define is-and?
   (lambda (v)
-    (equal? 'and (car v))))
+    (and (list-strictly-longer-than? v 0)
+         (equal? 'and (car v)))))
 
 ;;; predicate:
 (define is-or?
   (lambda (v)
-    (equal? 'or (car v))))
+    (and (list-strictly-longer-than? v 0)
+         (equal? 'or (car v)))))
+
+;;; predicate:
+(define is-let?
+  (lambda (v)
+    (and (proper-list-of-given-length? 3)
+         (equal? 'let (car v)))))
 
 ;;; predicate:
 (define is-begin?
   (lambda (v)
-    (equal? 'begin (car v))))
+    (and (list-strictly-longer-than? v 1)
+         (equal? 'begin (car v)))))
 
 ;;; predicate:
 (define is-quote?
   (lambda (v)
-    (equal? 'quote (car v))))
+    (and (list-strictly-longer-than? v 1)
+         (equal? 'quote (car v)))))
 
 ;;; predicate:
 (define is-quasiquote?
@@ -246,6 +257,29 @@
                           #t))])
       (visit (cdr v)))))
 
+(define check-let-expression
+  (trace-lambda outer (v)
+    (letrec ([visit (trace-lambda inner (l vars)
+                      (if (not (null? l))
+                          (if (and (proper-list-of-given-length? (car l) 2)
+                                   (check-variable (list-ref (car l) 0))
+                                   (check-expression (list-ref (car l) 1))
+                                   (not (member (list-ref (car l) 0) vars)))
+                              (visit (cdr l) (cons (list-ref (car l) 0) vars))
+                              #f)
+                          (check-expression (list-ref v 2))))])
+      (visit (list-ref v 1) '()))))
+                          
+;    (letrec ([visit (lambda (v vars)
+ ;                     (if (not (proper-list-of-given-length? v 1))
+  ;                        (if (and (check-variable (list-ref (carcar v) 0))
+   ;                                (check-expression (list-ref (car v) 1))
+    ;                               (not (member vars (list-ref (car v) 0))))
+     ;                         (visit (cdr v) (cons (list-ref (car v) 0) vars))
+      ;                        #f)
+       ;                   (check-expression (car v))))])
+      ;(visit (cdr v) '()))))
+
 (define check-begin-expression
   (lambda (v)
     (letrec ([visit (lambda (v)
@@ -274,7 +308,9 @@
                         [else #f]))])
       (visit v))))
 
-;(define check-quote
+(define check-quote-expression
+  (lambda (v)
+    (check-quotation (list-ref v 1))))
 
 (define check-quasiquote-expression
   (lambda (v)
