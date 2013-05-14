@@ -154,6 +154,12 @@
          (equal? 'let (car v)))))
 
 ;;; predicate:
+(define is-letstar?
+  (lambda (v)
+    (and (proper-list-of-given-lenght? 3)
+         (equal? 'let* (car v)))))
+
+;;; predicate:
 (define is-begin?
   (lambda (v)
     (and (list-strictly-longer-than? v 1)
@@ -205,6 +211,10 @@
        (check-and-expression v)]
       [(is-or? v)
        (check-or-expression v)]
+      [(is-let? v)
+       (check-let-expression v)]
+      [(is-letstar? v)
+       (check-letstar-expression v)]
       [(is-begin? v)
        (check-begin-expression v)]
       [(is-quote? v)
@@ -260,34 +270,26 @@
     (and
      (check-expression (case-1 v))
      (letrec ([visit (lambda (v)
-                       (if (not (proper-list-given-length? v 1))
-                           (if (letrec ([visit (lambda (v)
-                                                 (if (not (null? v))
-                                                     (if (check-quotation (car v))
-                                                         (visit (cdr q))
-                                                         #f)))])
-                                 (visit (case-2
-                                                 
+                       (if (not (proper-list-of-given-length? v 1))
+                           (if (and (proper-list-of-given-length? (car v) 2)
+                                    (helper-check-case-expression (list-ref (car v) 0))
+                                    (check-expression (list-ref (car v) 1)))
+                               (visit (cdr v))
+                               #f)
+                           (and (proper-list-of-given-length? (car v) 2)
+                                (equal? (list-ref (car v) 0) 'else)
+                                (check-expression (list-ref (car v) 1)))))])
+       (visit (case-2 v))))))
 
-(define check-case-expression-1
-  (trace-lambda l1 (v)
-    (and (check-expression (list-ref v 1))
-         (letrec ([visit (trace-lambda l2 (l)
-                           (if (and (not (proper-list-of-given-length? l 1))
-                                    (letrec ([visit (trace-lambda l3 (q)
-                                                      (if (not (null? q))
-                                                          (if (check-quotation (car v))
-                                                              (visit (cdr q))
-                                                              #f)
-                                                          (and 
-                                      (visit (list-ref (car l) 0))))
-                               (visit (cdr l))
-
-                               (check-expression (car l))))])
-
-           (visit (cdr (cdr v)))))))
-
-                              
+(define helper-check-case-expression
+  (lambda (v)
+    (letrec ([visit (lambda (v)
+                      (if (not (null? v))
+                          (if (check-quotation (car v))
+                              (visit (cdr v))
+                              #f)
+                          #t))])
+      (visit v))))                              
 
 (define check-and-expression
   (lambda (v)
@@ -310,17 +312,33 @@
       (visit (cdr v)))))
 
 (define check-let-expression
-  (trace-lambda outer (v)
-    (letrec ([visit (trace-lambda inner (l vars)
+  (lambda (v)
+    (letrec ([visit (lambda (l vars)
                       (if (not (null? l))
                           (if (and (proper-list-of-given-length? (car l) 2)
-                                   (check-variable (list-ref (car l) 0))
+                                   (if (symbol? (list-ref (car l) 0))
+                                       (check-variable (list-ref (car l) 0))
+                                       #f)
                                    (check-expression (list-ref (car l) 1))
                                    (not (member (list-ref (car l) 0) vars)))
                               (visit (cdr l) (cons (list-ref (car l) 0) vars))
                               #f)
                           (check-expression (list-ref v 2))))])
       (visit (list-ref v 1) '()))))
+
+(define check-letstar-expression
+  (trace-lambda outer (v)
+    (letrec ([visit (trace-lambda inner (l)
+                      (if (not (null? l))                          
+                          (if (and (proper-list-of-given-length? (car l) 2)
+                                   (if (symbol? (list-ref (car l) 0))
+                                       (check-variable (list-ref (car l) 0))
+                                       #f)
+                                   (check-expression (list-ref (car l) 1)))
+                              (visit (cdr l))
+                              #f)
+                          (check-expression (list-ref v 2))))])
+      (visit (list-ref v 1)))))
 
 (define check-begin-expression
   (lambda (v)
@@ -337,15 +355,14 @@
     (letrec ([visit (lambda (v)
                       (cond 
                         [(pair? v)
-                          ((visit (car v))
-                           (visit (cdr v)))]
-                        [(null? v)
-                         #t]
+                         (and (visit (car v))
+                              (visit (cdr v)))]
                         [(or (number? v)
                              (boolean? v)
                              (char? v)
                              (string? v)
-                             (symbol? v))
+                             (symbol? v)
+                             (null? v))
                          #t]
                         [else #f]))])
       (visit v))))
