@@ -120,6 +120,12 @@
          (equal? 'cond (car v)))))
 
 ;;; predicate:
+(define is-case?
+  (lambda (v)
+    (and (list-strictly-longer-than? v 2)
+         (equal? 'case (car v)))))
+
+;;; predicate:
 (define is-and?
   (lambda (v)
     (and (list-strictly-longer-than? v 0)
@@ -269,16 +275,6 @@
                               #f)
                           (check-expression (list-ref v 2))))])
       (visit (list-ref v 1) '()))))
-                          
-;    (letrec ([visit (lambda (v vars)
- ;                     (if (not (proper-list-of-given-length? v 1))
-  ;                        (if (and (check-variable (list-ref (carcar v) 0))
-   ;                                (check-expression (list-ref (car v) 1))
-    ;                               (not (member vars (list-ref (car v) 0))))
-     ;                         (visit (cdr v) (cons (list-ref (car v) 0) vars))
-      ;                        #f)
-       ;                   (check-expression (car v))))])
-      ;(visit (cdr v) '()))))
 
 (define check-begin-expression
   (lambda (v)
