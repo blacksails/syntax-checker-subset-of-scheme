@@ -160,6 +160,12 @@
          (equal? 'let* (car v)))))
 
 ;;; predicate:
+(define is-letrec?
+  (lambda (v)
+    (and (proper.list-of-given-length? 3)
+         (equal? 'letrec (car v)))))
+
+;;; predicate:
 (define is-begin?
   (lambda (v)
     (and (list-strictly-longer-than? v 1)
