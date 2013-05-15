@@ -221,6 +221,8 @@
        (check-let-expression v)]
       [(is-letstar? v)
        (check-letstar-expression v)]
+      [(is-letrec? v)
+       (check-letrec-expression v)]
       [(is-begin? v)
        (check-begin-expression v)]
       [(is-quote? v)
