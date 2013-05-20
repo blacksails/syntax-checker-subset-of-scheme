@@ -49,7 +49,6 @@
 ;;;;;;;;;;
 ;;; basic predicates and accessors for definitions:
 ;;;;;;;;;;
-
 ;;; predicate:
 (define is-definition?
   (lambda (v)
@@ -162,7 +161,7 @@
 ;;; predicate:
 (define is-letrec?
   (lambda (v)
-    (and (proper.list-of-given-length? 3)
+    (and (proper-list-of-given-length? 3)
          (equal? 'letrec (car v)))))
 
 ;;; predicate:
@@ -174,7 +173,7 @@
 ;;; predicate:
 (define is-quote?
   (lambda (v)
-    (and (list-strictly-longer-than? v 1)
+    (and (proper-list-of-given-length v 2)
          (equal? 'quote (car v)))))
 
 ;;; predicate:
@@ -385,6 +384,28 @@
                       (errorf 'check-quasiquote-expression "not implemented yet: ~s" v))])
       (visit (quasiquote-1 v) 0))))
 
+(define check-lambda-formals
+  (lambda (v)
+    (cond
+      [(symbol? v)
+       (check-variable v)]
+      [(list? v)
+       (letrec ([visit (lambda (v)
+                         (if (not (null? v))
+                             (if (check-variable (car v))
+                                 (visit (cdr v))
+                                 #f)
+                             #t))])
+         (visit v))]
+      [else 
+       (letrec ([visit (lambda (v)
+                         (if (pair? v)
+                             (if (check-variable (car v))
+                                 (visit (cdr v))
+                                 #f)
+                             (check-variable v)))])
+         (visit v))])))
+
 ;;;;;;;;;;
 ;;; auxiliaries:
 ;;;;;;;;;;
@@ -444,6 +465,9 @@
                             (cons-case (car ws)
                                        (visit (cdr ws)))))])
         (visit vs)))))
+; (right-fold-proper-list '() cons) constructs a list from a list. By making pairs of an entity and a list, 
+; exactly as the normal (list ...) procedure. It becomes a proper list because the nil-case is the empty list.
+; We could call this the identity function.
 
 (define left-fold-proper-list
   (lambda (nil-case cons-case)
@@ -453,6 +477,7 @@
                             a
                             (visit (cdr ws) (cons-case (car ws) a))))])
         (visit vs nil-case)))))
- 
-; (right-fold-proper-list '() cons) constructs a list from a list
-; (left-fold-proper-list '() cons) constructs a list from a list starting from the end
+; (left-fold-proper-list '() cons) constructs a list from a list starting from the the entity appearing as
+; the first in the list. Which means that that the list is reversed. But the cdr of the inner most pair remains 
+; as the empty list, as a starts being '(). Therefore this is still a proper list. And the function is the
+; reverse function
