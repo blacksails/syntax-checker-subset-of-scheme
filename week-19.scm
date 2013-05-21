@@ -212,6 +212,12 @@
 (define lambda-3
   (lambda (v)
     (list-ref v 3)))
+
+;;; predicate:
+(define is-application?
+  (lambda (v)
+    (list-strictly-longer-than? v 0)))
+
 ;;;;;;;;;;
 ;;; the syntax checker proper for expressions:
 ;;;;;;;;;;
@@ -255,8 +261,8 @@
        (check-quasiquote-expression v)]
       [(is-lambda-abstraction? v)
        (check-lambda-abstraction v)]
-      [(list? v)
-       (check-expressions v)]
+      [(is-application? v)
+       (check-application v)]
       [else
        (errorf 'check-expression "unrecognized: ~s" v)])))
 
@@ -462,7 +468,7 @@
       [else
       #f])))
 
-(define check-expressions
+(define check-application
   (lambda (v)
     (letrec ([visit (lambda (v)
                       (if (not (null? v))
