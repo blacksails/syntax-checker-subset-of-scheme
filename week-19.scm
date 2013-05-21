@@ -257,7 +257,7 @@
              (check-expression (list-ref v 1)))
         (and (proper-list-of-given-length? v 3)
              (check-expression (list-ref v 0))
-             (= '=> (list-ref v 1))
+             (equal? '=> (list-ref v 1))
              (check-expression (list-ref v 2))))))
 
 (define check-cond-expression
