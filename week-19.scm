@@ -375,6 +375,21 @@
                           (check-expression (list-ref v 2))))])
       (visit (list-ref v 1)))))
 
+(define check-letrec-expression
+  (lambda (v)
+    (letrec ([visit (lambda (l vars)
+                      (if (not (null? l))
+                          (if (and (proper-list-of-given-length? (car l) 2)
+                                   (if (symbol? (list-ref (car l) 0))
+                                       (check-variable (list-ref (car l) 0))
+                                       #f)
+                                   (check-lambda-abstraction (list-ref (car l) 1))
+                                   (not (member (list-ref (car l) 0) vars)))
+                              (visit (cdr l) (cons (list-ref (car l) 0) vars))
+                              #f)
+                          (check-expression (list-ref v 2))))])
+      (visit (list-ref v 1) '()))))
+
 (define check-begin-expression
   (lambda (v)
     (letrec ([visit (lambda (v)
@@ -443,7 +458,9 @@
       [(equal? (car v) 'trace-lambda)
        (and (check-quotation (list-ref v 1))
             (check-lambda-formals (list-ref v 2))
-            (check-expression (list-ref v 3)))])))
+            (check-expression (list-ref v 3)))]
+      [else
+      #f])))
 
 (define check-expressions
   (lambda (v)
