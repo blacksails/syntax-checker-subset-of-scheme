@@ -197,6 +197,21 @@
        (proper-list-of-given-length? v 4)]
       [else
        #f])))
+
+;;; 1st accessor:
+(define lambda-1
+  (lambda (v)
+    (list-ref v 1)))
+
+;;; 2nd accessor:
+(define lambda-2
+  (lambda (v)
+    (list-ref v 2)))
+
+;;; 3rd accessor:      (only used in trace-lambda)
+(define lambda-3
+  (lambda (v)
+    (list-ref v 3)))
 ;;;;;;;;;;
 ;;; the syntax checker proper for expressions:
 ;;;;;;;;;;
