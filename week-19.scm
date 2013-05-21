@@ -397,14 +397,14 @@
                                  #f)
                              #t))])
          (visit v))]
-      [else 
+      [else ; pair? = #t
        (letrec ([visit (lambda (v)
                          (if (pair? v)
                              (if (check-variable (car v))
                                  (visit (cdr v))
                                  #f)
                              (check-variable v)))])
-         (visit v))])))
+             (visit v))])))
 
 ;;;;;;;;;;
 ;;; auxiliaries:
