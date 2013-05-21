@@ -433,6 +433,17 @@
                              (check-variable v)))])
              (visit v))])))
 
+(define check-lambda-abstraction
+  (lambda (v)
+    (cond
+      [(equal? (car v) 'lambda)
+       (and (check-lambda-formals (list-ref v 1))
+            (check-expression (list-ref v 2)))]
+      [(equal? (car v) 'trace-lambda)
+       (and (check-quotation (list-ref v 1))
+            (check-lambda-formals (list-ref v 2))
+            (check-expression (list-ref v 3)))])))
+
 ;;;;;;;;;;
 ;;; auxiliaries:
 ;;;;;;;;;;
