@@ -149,19 +149,19 @@
 ;;; predicate:
 (define is-let?
   (lambda (v)
-    (and (proper-list-of-given-length? 3)
+    (and (proper-list-of-given-length? v 3)
          (equal? 'let (car v)))))
 
 ;;; predicate:
 (define is-letstar?
   (lambda (v)
-    (and (proper-list-of-given-lenght? 3)
+    (and (proper-list-of-given-length? v 3)
          (equal? 'let* (car v)))))
 
 ;;; predicate:
 (define is-letrec?
   (lambda (v)
-    (and (proper-list-of-given-length? 3)
+    (and (proper-list-of-given-length? v 3)
          (equal? 'letrec (car v)))))
 
 ;;; predicate:
@@ -173,7 +173,7 @@
 ;;; predicate:
 (define is-quote?
   (lambda (v)
-    (and (proper-list-of-given-length v 2)
+    (and (proper-list-of-given-length? v 2)
          (equal? 'quote (car v)))))
 
 ;;; predicate:
@@ -187,6 +187,16 @@
   (lambda (v)
     (list-ref v 1)))
 
+;;; predicate:
+(define is-lambda-abstraction?
+  (lambda (v)
+    (cond
+      [(equal? (car v) 'lambda)
+       (proper-list-of-given-length? v 3)]
+      [(equal? (car v) 'trace-lambda)
+       (proper-list-of-given-length? v 4)]
+      [else
+       #f])))
 ;;;;;;;;;;
 ;;; the syntax checker proper for expressions:
 ;;;;;;;;;;
@@ -228,6 +238,8 @@
        (check-quote-expression v)]
       [(is-quasiquote? v)
        (check-quasiquote-expression v)]
+      [(is-lambda-abstraction? v)
+       (check-lambda-abstraction v)]
       [else
        ;;; (errorf 'check-expression "unrecognized: ~s" v)
        (errorf 'check-expression "not implemented yet: ~s" v)])))
@@ -441,7 +453,7 @@
         (check-program (read-file filename))
         (errorf 'check-file "not a string: ~s" filename))))
 
-
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Exercise 3
 (define curry3
   (lambda (f)
