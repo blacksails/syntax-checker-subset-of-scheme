@@ -255,9 +255,10 @@
        (check-quasiquote-expression v)]
       [(is-lambda-abstraction? v)
        (check-lambda-abstraction v)]
+      [(list? v)
+       (check-expressions v)]
       [else
-       ;;; (errorf 'check-expression "unrecognized: ~s" v)
-       (errorf 'check-expression "not implemented yet: ~s" v)])))
+       (errorf 'check-expression "unrecognized: ~s" v)])))
 
 (define check-variable
   (lambda (v)
@@ -443,6 +444,16 @@
        (and (check-quotation (list-ref v 1))
             (check-lambda-formals (list-ref v 2))
             (check-expression (list-ref v 3)))])))
+
+(define check-expressions
+  (lambda (v)
+    (letrec ([visit (lambda (v)
+                      (if (not (null? v))
+                          (if (check-expression (car v))
+                              (visit (cdr v))
+                              #f)
+                          #t))])
+      (visit v))))
 
 ;;;;;;;;;;
 ;;; auxiliaries:
