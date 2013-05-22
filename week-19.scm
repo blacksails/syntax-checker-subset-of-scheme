@@ -188,6 +188,28 @@
     (list-ref v 1)))
 
 ;;; predicate:
+(define is-unquote?
+  (lambda (v)
+    (and (proper-list-of-given-length? v 2)
+         (equal? 'unquote (car v)))))
+
+;;; 1st accessor:
+(define unquote-1
+  (lambda (v)
+    (list-ref v 1)))
+
+;;; predicate:
+(define is-unquote-splicing?
+  (lambda (v)
+    (and (proper-list-of-given-length? v 2)
+         (equal? 'unquote-splicing (car v)))))
+
+;;; 1st accessor:
+(define unquote-splicing-1
+  (lambda (v)
+    (list-ref v 1)))
+
+;;; predicate:
 (define is-lambda-abstraction?
   (lambda (v)
     (cond
@@ -430,7 +452,30 @@
 (define check-quasiquote-expression
   (lambda (v)
     (letrec ([visit (lambda (v number-of-nestings)
-                      (errorf 'check-quasiquote-expression "not implemented yet: ~s" v))])
+                      (cond
+                        [(or (number? v)
+                             (boolean? v)
+                             (string? v)
+                             (symbol? v)
+                             (null? v))
+                         #t]
+                        [(is-quasiquote?)
+                         (visit (quasiquote-1 v) (+ 1 number-of-nestings))]
+                        [(is-unquote?)
+                         (if (= number-of-nestings 0)
+                             (check-expression (quote-1 v))
+                             (visit (quote-1 v) (- 1 number-of-nestings)))]
+                        [(is-unquote-splicing?)
+                         (if (= number-of-nestings 0)
+                             (check-expression (unquote-splicing-1 v))
+                             (visit (unquote-splicing-1 v) (- 1 number-of-nestings)))]
+                        [(not (list? v))
+                         (if (pair? v)
+                             (and (visit (car v) number-of-nestings)
+                                  (visit (cdr v) number-of-nestings))
+                             #f)]
+                        [else
+                         #f]))])
       (visit (quasiquote-1 v) 0))))
 
 (define check-lambda-formals
