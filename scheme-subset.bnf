@@ -1,0 +1,128 @@
+<program>               ::= {<toplevel-form>}*
+
+<toplevel-form>         ::= <definition>
+                          | <expression>
+
+<definition>            ::= (define <variable> <expression>)
+
+<expression>            ::= <number>
+                          | <boolean>
+                          | <character>
+                          | <string>
+                          | <variable>
+                          | <time-expression>
+                          | <if-expression>
+                          | <cond-expression>
+                          | <case-expression>
+                          | <and-expression>
+                          | <or-expression>
+                          | <let-expression>
+                          | <letstar-expression>
+                          | <letrec-expression>
+                          | <begin-expression>
+                          | <quote-expression>
+                          | <quasiquote-expression>
+                          | <lambda-abstraction>
+                          | <application>
+
+<time-expression>       ::= (time <expression>)
+
+<if-expression>         ::= (if <expression> <expression> <expression>)
+
+<cond-expression>       ::= (cond
+                              {<cond-clause>}*
+                              [else <expression>])
+
+<cond-clause>           ::= [<expression>]
+                          | [<expression> <expression>]
+                          | [<expression> => <expression>]
+
+<case-expression>       ::= (case <expression>
+                              {[({<quotation>}*) <expression>]}*
+                              [else <expression>])
+
+<and-expression>        ::= (and {<expression>}*)
+
+<or-expression>         ::= (or {<expression>}*)
+
+<let-expression>        ::= (let ({[<variable> <expression>]}*) <expression>)
+                            ;;; where all the variables are distinct
+
+<letstar-expression>    ::= (let* ({[<variable> <expression>]}*) <expression>)
+
+<letrec-expression>     ::= (letrec ({[<variable> <lambda-abstraction>]}*) <expression>)
+                            ;;; where all the variables are distinct
+
+<begin-expression>      ::= (begin {<expression>}* <expression>)
+
+<quote-expression>      ::= (quote <quotation>)
+
+<quotation>             ::= <number>
+                          | <boolean>
+                          | <character>
+                          | <string>
+                          | <symbol>
+                          | ()
+                          | (<quotation> . <quotation>)
+
+<quasiquote-expression> ::= (quasiquote <quasiquotation_0>)
+
+<quasiquotation_0>      ::= <number>
+                          | <boolean>
+                          | <character>
+                          | <string>
+                          | <symbol>
+                          | ()
+                          | (quasiquote <quasiquotation_1>)
+                          | (unquote <expression>)
+                          | (unquote-splicing <expression>)
+                          | (<quasiquotation_0> . <quasiquotation_0>)
+
+<quasiquotation_j>      ::= <number>
+                          | <boolean>
+                          | <character>
+                          | <string>
+                          | <symbol>
+                          | ()
+                          | (quasiquote <quasiquotation_k>)
+                            ;;; where k = j + 1
+                          | (unquote <quasiquotation_i>)
+                            ;;; where j = i + 1
+                          | (unquote-splicing <quasiquotation_i>)
+                            ;;; where j = i + 1
+                          | (<quasiquotation_j> . <quasiquotation_j>)
+
+<lambda-abstraction>    ::= (lambda <lambda-formals> <expression>)
+                          | (trace-lambda <quotation> <lambda-formals> <expression>)
+
+<lambda-formals>        ::= <variable>
+                          | ({<variable>}*)
+                            ;;; where all the variables are distinct
+                          | ({<variable>}+ . <variable>)
+                            ;;; where all the variables are distinct
+
+<application>           ::= (<expression> {<expression>}*)
+
+;;;;;; where:
+; a number is a value that answers #t to the predicate number?
+
+; a Boolean is a value that answers #t to the predicate boolean?
+
+; a character is a value that answers #t to the predicate char?
+
+; a string is a value that answers #t to the predicate string?
+
+; a symbol is a value that answers #t to the predicate symbol?
+
+; a variable is a value that answers #t to the predicate symbol? and that is not a keyword (as defined just below)
+; keywords are the symbols define, time, if, cond, else, case, and, or, let, let*, letrec, begin, quote, quasiquote, 
+; unquote, unquote-splicing, lambda, and trace-lambda
+
+; the non-terminal <quasiquotation_j> is indexed with a natural number j indicating the number of quasiquotation nestings
+; initially this index is 0 (<quasiquotation_0> just above)
+; a nested quasiquotation increments the index by 1 (from <quasiquotation_j> to <quasiquotation_k>, where k = j + 1, just above),
+; and unquoting decrements a strictly positive index by 1 (from <quasiquotation_j> to <quasiquotation_i>, where j = i + 1, 
+; just above) and
+; the expressions (quasiquote <quasiquotation_1>), (unquote <expression>), (unquote-splicing <expression>), 
+; (quasiquote <quasiquotation_k>) (unquote <quasiquotation_i>), and (unquote-splicing <quasiquotation_i>) 
+; are unambiguously parsed as special forms where quasiquote, unquote, and unquote-splicing are keywords.
