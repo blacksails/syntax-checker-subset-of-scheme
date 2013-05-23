@@ -1,6 +1,6 @@
 ; Exercise 1
 ; if called on the empty list then the empty list is returned
-; if called on an improper list an exeption is thrown
+; if called on an improper list an exception is thrown
 ; if called with zero parameters then the empty list is returned
 ; if called with one papameter then the parameter is returned
 (define proper-list-append
