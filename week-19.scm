@@ -150,7 +150,8 @@
 (define is-let?
   (lambda (v)
     (and (proper-list-of-given-length? v 3)
-         (equal? 'let (car v)))))
+         (equal? 'let (car v))
+         (list? (list-ref v 1)))))
 
 ;;; predicate:
 (define is-letstar?
@@ -162,7 +163,8 @@
 (define is-letrec?
   (lambda (v)
     (and (proper-list-of-given-length? v 3)
-         (equal? 'letrec (car v)))))
+         (equal? 'letrec (car v))
+         (list? (list-ref v 1)))))
 
 ;;; predicate:
 (define is-begin?
@@ -175,6 +177,11 @@
   (lambda (v)
     (and (proper-list-of-given-length? v 2)
          (equal? 'quote (car v)))))
+
+;;; 1st acessor:
+(define quote-1
+  (lambda (v)
+    (list-ref v 1)))
 
 ;;; predicate:
 (define is-quasiquote?
@@ -238,7 +245,8 @@
 ;;; predicate:
 (define is-application?
   (lambda (v)
-    (list-strictly-longer-than? v 0)))
+    (and (list-strictly-longer-than? v 0)
+         (check-expression (car v)))))
 
 ;;;;;;;;;;
 ;;; the syntax checker proper for expressions:
@@ -247,6 +255,8 @@
 (define check-expression
   (lambda (v)
     (cond
+      [(null? v)
+       #t]
       [(number? v)
        #t]
       [(boolean? v)
@@ -335,7 +345,9 @@
      (letrec ([visit (lambda (v)
                        (if (not (proper-list-of-given-length? v 1))
                            (if (and (proper-list-of-given-length? (car v) 2)
-                                    (helper-check-case-expression (list-ref (car v) 0))
+                                    (if (list? (list-ref (car v) 0))
+                                        (helper-check-case-expression (list-ref (car v) 0))
+                                        #f)
                                     (check-expression (list-ref (car v) 1)))
                                (visit (cdr v))
                                #f)
@@ -459,13 +471,13 @@
                              (symbol? v)
                              (null? v))
                          #t]
-                        [(is-quasiquote?)
+                        [(is-quasiquote? v)
                          (visit (quasiquote-1 v) (+ 1 number-of-nestings))]
-                        [(is-unquote?)
+                        [(is-unquote? v)
                          (if (= number-of-nestings 0)
                              (check-expression (quote-1 v))
                              (visit (quote-1 v) (- 1 number-of-nestings)))]
-                        [(is-unquote-splicing?)
+                        [(is-unquote-splicing? v)
                          (if (= number-of-nestings 0)
                              (check-expression (unquote-splicing-1 v))
                              (visit (unquote-splicing-1 v) (- 1 number-of-nestings)))]
@@ -484,21 +496,30 @@
       [(symbol? v)
        (check-variable v)]
       [(list? v)
-       (letrec ([visit (lambda (v)
+       (letrec ([visit (lambda (v vars)
                          (if (not (null? v))
-                             (if (check-variable (car v))
-                                 (visit (cdr v))
+                             (if (symbol? (car v))
+                                 (if (and (check-variable (car v))
+                                          (not (member (car v) vars)))
+                                     (visit (cdr v) (cons (car v) vars))
+                                     #f)
                                  #f)
                              #t))])
-         (visit v))]
+         (visit v (list)))]
       [else ; pair? = #t
-       (letrec ([visit (lambda (v)
+       (letrec ([visit (lambda (v vars)
                          (if (pair? v)
-                             (if (check-variable (car v))
-                                 (visit (cdr v))
+                             (if (symbol? (car v))
+                                 (if (and (check-variable (car v))
+                                          (not (member (car v) vars)))
+                                     (visit (cdr v) (cons (car v) vars))
+                                     #f)
                                  #f)
-                             (check-variable v)))])
-             (visit v))])))
+                             (if (symbol? v)
+                                 (and (check-variable v)
+                                      (not (member v vars)))
+                                 #f)))])
+             (visit v (list)))])))
 
 (define check-lambda-abstraction
   (lambda (v)
