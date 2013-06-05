@@ -256,7 +256,7 @@
   (lambda (v)
     (cond
       [(null? v)
-       #t]
+       #f]
       [(number? v)
        #t]
       [(boolean? v)
@@ -476,11 +476,11 @@
                         [(is-unquote? v)
                          (if (= number-of-nestings 0)
                              (check-expression (quote-1 v))
-                             (visit (quote-1 v) (- 1 number-of-nestings)))]
+                             (visit (quote-1 v) (- number-of-nestings 1)))]
                         [(is-unquote-splicing? v)
                          (if (= number-of-nestings 0)
                              (check-expression (unquote-splicing-1 v))
-                             (visit (unquote-splicing-1 v) (- 1 number-of-nestings)))]
+                             (visit (unquote-splicing-1 v) (- number-of-nestings 1)))]
                         [(not (list? v))
                          (if (pair? v)
                              (and (visit (car v) number-of-nestings)
