@@ -187,7 +187,7 @@
 (define is-quasiquote?
   (lambda (v)
     (and (proper-list-of-given-length? v 2)
-         (equal? (car v) 'quasiquote))))
+         (equal? 'quasiquote (car v)))))
 
 ;;; 1st accessor:
 (define quasiquote-1
@@ -200,32 +200,24 @@
     (and (proper-list-of-given-length? v 2)
          (equal? 'unquote (car v)))))
 
-;;; 1st accessor:
-(define unquote-1
-  (lambda (v)
-    (list-ref v 1)))
-
 ;;; predicate:
 (define is-unquote-splicing?
   (lambda (v)
     (and (proper-list-of-given-length? v 2)
          (equal? 'unquote-splicing (car v)))))
 
-;;; 1st accessor:
-(define unquote-splicing-1
-  (lambda (v)
-    (list-ref v 1)))
-
 ;;; predicate:
 (define is-lambda-abstraction?
   (lambda (v)
-    (cond
-      [(equal? (car v) 'lambda)
-       (proper-list-of-given-length? v 3)]
-      [(equal? (car v) 'trace-lambda)
-       (proper-list-of-given-length? v 4)]
-      [else
-       #f])))
+    (if (list? v)
+        (cond
+          [(equal? (car v) 'lambda)
+           (proper-list-of-given-length? v 3)]
+          [(equal? (car v) 'trace-lambda)
+           (proper-list-of-given-length? v 4)]
+          [else
+           #f])
+        #f)))
 
 ;;; 1st accessor:
 (define lambda-1
@@ -255,6 +247,8 @@
 (define check-expression
   (lambda (v)
     (cond
+      [(is-definition? v)
+       #f]
       [(null? v)
        #f]
       [(number? v)
@@ -423,7 +417,9 @@
                                    (if (symbol? (list-ref (car l) 0))
                                        (check-variable (list-ref (car l) 0))
                                        #f)
-                                   (check-lambda-abstraction (list-ref (car l) 1))
+                                   (if (is-lambda-abstraction? (list-ref (car l) 1))
+                                       (check-lambda-abstraction (list-ref (car l) 1))
+                                       #f)
                                    (not (member (list-ref (car l) 0) vars)))
                               (visit (cdr l) (cons (list-ref (car l) 0) vars))
                               #f)
@@ -463,32 +459,85 @@
 
 (define check-quasiquote-expression
   (lambda (v)
-    (letrec ([visit (lambda (v number-of-nestings)
-                      (cond
-                        [(or (number? v)
-                             (boolean? v)
-                             (string? v)
-                             (symbol? v)
-                             (null? v))
-                         #t]
-                        [(is-quasiquote? v)
-                         (visit (quasiquote-1 v) (+ 1 number-of-nestings))]
-                        [(is-unquote? v)
-                         (if (= number-of-nestings 0)
-                             (check-expression (quote-1 v))
-                             (visit (quote-1 v) (- number-of-nestings 1)))]
-                        [(is-unquote-splicing? v)
-                         (if (= number-of-nestings 0)
-                             (check-expression (unquote-splicing-1 v))
-                             (visit (unquote-splicing-1 v) (- number-of-nestings 1)))]
-                        [(not (list? v))
-                         (if (pair? v)
-                             (and (visit (car v) number-of-nestings)
-                                  (visit (cdr v) number-of-nestings))
-                             #f)]
-                        [else
-                         #f]))])
-      (visit (quasiquote-1 v) 0))))
+    (letrec ([quasiquotation_0 (trace-lambda q0 (v)
+                                 (cond 
+                                   [(or (number? v)
+                                        (boolean? v)
+                                        (char? v)
+                                        (string? v)
+                                        (symbol? v)
+                                        (null? v))
+                                    #t]
+                                   [(is-quasiquote? v)
+                                    (quasiquotation_j v 1)]
+                                   [(is-unquote? v)
+                                    (check-expression (cdr v))]
+                                   [(is-unquote-splicing? v)
+                                    (check-expression (cdr v))]
+                                   [(and (pair? v)
+                                         (not (list? v)))
+                                    (and (quasiquotation_0 (car v))
+                                         (quasiquotation_0 (cdr v)))]
+                                   [(if (pair? v)
+                                        (if (quasiquotation_0 (car v))
+                                            (check-aux_0 (cdr v))
+                                            #f)
+                                        #f)
+                                    #t]
+                                   [else
+                                    #f]))]
+
+             [quasiquotation_j (trace-lambda qj (v number-of-nestings)
+                                 (cond
+                                   [(or (number? v)
+                                        (boolean? v)
+                                        (char? v)
+                                        (string? v)
+                                        (symbol? v)
+                                        (null? v))
+                                    #t]
+                                   [(is-quasiquote? v)
+                                    (quasiquotation_j (cdr v) (+ number-of-nestings 1))]
+                                   [(is-unquote? v)
+                                    (if (zero? (- number-of-nestings 1))
+                                        (quasiquotation_0 v)
+                                        (quasiquotation_j (cdr v) (- number-of-nestings 1)))]
+                                   [(is-unquote-splicing? v)
+                                    (if (zero? (- number-of-nestings 1))
+                                        (quasiquotation_0 v)
+                                        (quasiquotation_j v (- number-of-nestings 1)))]
+                                   [(and (pair? v)
+                                         (not (list? v)))
+                                    (and (quasiquotation_j (car v) number-of-nestings)
+                                         (quasiquotation_j (cdr v) number-of-nestings))]
+                                   [(if (pair? v)
+                                        (if (quasiquotation_j (car v) number-of-nestings)
+                                            (check-aux_j (cdr v) number-of-nestings)
+                                            #f)
+                                        #f)
+                                    #t]
+                                   [else
+                                    #f]))]
+
+             [check-aux_0 (trace-lambda a0 (v)
+                            (if (not (null? v))
+                                (if (pair? v)
+                                    (if (quasiquotation_0 (car v))
+                                        (quasiquotation_0 (cdr v))
+                                        #f)
+                                    (quasiquotation_0 v))
+                                #t))]
+             
+             [check-aux_j (trace-lambda aj (v number-of-nestings)
+                            (if (not (null? v))
+                                (if (pair? v)
+                                    (if (quasiquotation_j (car v) number-of-nestings)
+                                        (quasiquotation_j (cdr v) number-of-nestings)
+                                        #f)
+                                    #f)
+                                #t))])
+    (quasiquotation_0 (list-ref v 1)))))
+
 
 (define check-lambda-formals
   (lambda (v)
