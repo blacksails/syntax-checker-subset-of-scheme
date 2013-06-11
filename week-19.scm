@@ -1,4 +1,6 @@
 ; Exercise 2
+; I did a complete rewrite of check-quasiquote-expression, it might still contain bugs,
+; but it does what it shall in all the examples you have given me in the feedback.
 (define proper-list-of-given-length?
   (lambda (v n)
     (or (and (null? v)
@@ -446,7 +448,7 @@
 
 (define check-quasiquote-expression
   (lambda (v)
-    (letrec ([quasiquotation_0 (trace-lambda q0 (v)
+    (letrec ([quasiquotation_0 (lambda (v)
                                  (cond 
                                    [(or (number? v)
                                         (boolean? v)
@@ -474,7 +476,7 @@
                                    [else
                                     #f]))]
 
-             [quasiquotation_j (trace-lambda qj (v number-of-nestings)
+             [quasiquotation_j (lambda (v number-of-nestings)
                                  (cond
                                    [(or (number? v)
                                         (boolean? v)
@@ -506,7 +508,7 @@
                                    [else
                                     #f]))]
 
-             [check-aux_0 (trace-lambda a0 (v)
+             [check-aux_0 (lambda (v)
                             (if (not (null? v))
                                 (if (pair? v)
                                     (if (quasiquotation_0 (car v))
@@ -515,7 +517,7 @@
                                     (quasiquotation_0 v))
                                 #t))]
              
-             [check-aux_j (trace-lambda aj (v number-of-nestings)
+             [check-aux_j (lambda (v number-of-nestings)
                             (if (not (null? v))
                                 (if (pair? v)
                                     (if (quasiquotation_j (car v) number-of-nestings)
