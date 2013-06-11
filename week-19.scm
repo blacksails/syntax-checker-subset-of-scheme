@@ -1,16 +1,3 @@
-; Exercise 1
-; if called on the empty list then the empty list is returned
-; if called on an improper list an exception is thrown
-; if called with zero parameters then the empty list is returned
-; if called with one papameter then the parameter is returned
-(define proper-list-append
-  (lambda xs
-    (letrec ([visit (lambda (xs)
-                      (if (null? xs)
-                          '()
-                          (append (car xs) (visit (cdr xs)))))])
-      (visit xs))))
-
 ; Exercise 2
 (define proper-list-of-given-length?
   (lambda (v n)
@@ -627,44 +614,3 @@
     (if (string? filename)
         (check-program (read-file filename))
         (errorf 'check-file "not a string: ~s" filename))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Exercise 3
-(define curry3
-  (lambda (f)
-    (lambda (x1)
-      (lambda (x2)
-        (lambda (x3)
-        (f x1 x2 x3))))))
-
-(define uncurry3
-  (lambda (f)
-    (lambda (x1 x2 x3)
-      (((f x1) x2) x3))))
-
-; Exercise 5
-(define right-fold-proper-list
-  (lambda (nil-case cons-case)
-    (lambda (vs)
-      (letrec ([visit (lambda (ws)
-                        (if (null? ws)
-                            nil-case
-                            (cons-case (car ws)
-                                       (visit (cdr ws)))))])
-        (visit vs)))))
-; (right-fold-proper-list '() cons) constructs a list from a list. By making pairs of an entity and a list, 
-; exactly as the normal (list ...) procedure. It becomes a proper list because the nil-case is the empty list.
-; We could call this the identity function.
-
-(define left-fold-proper-list
-  (lambda (nil-case cons-case)
-    (lambda (vs)
-      (letrec ([visit (lambda (ws a)
-                        (if (null? ws)
-                            a
-                            (visit (cdr ws) (cons-case (car ws) a))))])
-        (visit vs nil-case)))))
-; (left-fold-proper-list '() cons) constructs a list from a list starting from the the entity appearing as
-; the first in the list. Which means that that the list is reversed. But the cdr of the inner most pair remains 
-; as the empty list, as a starts being '(). Therefore this is still a proper list. And the function is the
-; reverse function
