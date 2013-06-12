@@ -279,7 +279,8 @@
       [(is-application? v)
        (check-application v)]
       [else
-       (errorf 'check-expression "unrecognized: ~s" v)])))
+       #f])))
+       ;(errorf 'check-expression "unrecognized: ~s" v)])))
 
 (define check-variable
   (lambda (v)
